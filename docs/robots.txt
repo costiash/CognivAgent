@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://costiash.github.io/CognivAgent/sitemap.xml
