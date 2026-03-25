@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CognivAgent | AI Video Transcription &amp; Knowledge Graph Extraction</title>
+    <meta
+      name="description"
+      content="CognivAgent is an open-source AI agent for video transcription, transcript analysis, and knowledge graph extraction from local videos and YouTube transcripts."
+    >
+    <meta
+      name="keywords"
+      content="CognivAgent, AI video transcription, knowledge graph extraction, transcript analysis, FastAPI, Claude Agent SDK, OpenAI transcription, Cytoscape.js"
+    >
+    <meta
+      name="robots"
+      content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+    >
+    <link rel="canonical" href="https://costiash.github.io/CognivAgent/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CognivAgent | AI Video Transcription &amp; Knowledge Graph Extraction">
+    <meta
+      property="og:description"
+      content="Transform videos into searchable knowledge graphs with an open-source FastAPI app powered by Claude Agent SDK and OpenAI transcription."
+    >
+    <meta property="og:url" content="https://costiash.github.io/CognivAgent/">
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/costiash/CognivAgent/main/assets/chat_interface_dark.png"
+    >
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CognivAgent | AI Video Transcription &amp; Knowledge Graph Extraction">
+    <meta
+      name="twitter:description"
+      content="Open-source video transcription and knowledge graph extraction for research workflows."
+    >
+    <meta
+      name="twitter:image"
+      content="https://raw.githubusercontent.com/costiash/CognivAgent/main/assets/chat_interface_dark.png"
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:wght@400;600;700&family=Syne:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "CognivAgent",
+        "url": "https://costiash.github.io/CognivAgent/",
+        "codeRepository": "https://github.com/costiash/CognivAgent",
+        "description": "Open-source AI agent for video transcription, transcript analysis, and knowledge graph extraction.",
+        "license": "https://github.com/costiash/CognivAgent/blob/main/LICENSE",
+        "programmingLanguage": ["Python", "JavaScript"],
+        "runtimePlatform": "Python 3.11+",
+        "operatingSystem": "Linux, macOS, Windows",
+        "keywords": [
+          "video transcription",
+          "knowledge graph extraction",
+          "transcript analysis",
+          "FastAPI",
+          "Claude Agent SDK",
+          "OpenAI gpt-4o-transcribe"
+        ],
+        "softwareRequirements": [
+          "Anthropic API key",
+          "OpenAI API key",
+          "uv"
+        ]
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #060816;
+        --bg-alt: rgba(13, 18, 42, 0.78);
+        --panel: rgba(12, 17, 38, 0.88);
+        --panel-strong: rgba(10, 14, 30, 0.94);
+        --line: rgba(108, 140, 255, 0.24);
+        --line-strong: rgba(121, 163, 255, 0.48);
+        --text: #edf1ff;
+        --muted: #b1bed9;
+        --accent: #80f5ff;
+        --accent-2: #6f7dff;
+        --accent-3: #ffc46b;
+        --success: #88ffbe;
+        --shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+        --max-width: 1160px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Source Serif 4", Georgia, serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(111, 125, 255, 0.22), transparent 34%),
+          radial-gradient(circle at top right, rgba(128, 245, 255, 0.16), transparent 28%),
+          linear-gradient(180deg, #090c1d 0%, #060816 46%, #050711 100%);
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 72px 72px;
+        content: "";
+        mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.85), transparent 92%);
+      }
+
+      body::after {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background-image:
+          radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.13) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.14) 0 1px, transparent 1.8px),
+          radial-gradient(circle at 65% 78%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1.7px),
+          radial-gradient(circle at 12% 82%, rgba(255, 255, 255, 0.12) 0 1px, transparent 1.6px);
+        background-size: 280px 280px;
+        opacity: 0.65;
+        content: "";
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .site-shell {
+        width: min(calc(100% - 2rem), var(--max-width));
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(16px);
+        background: rgba(6, 8, 22, 0.74);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .topbar-inner,
+      .hero,
+      .section,
+      footer {
+        width: min(calc(100% - 2rem), var(--max-width));
+        margin: 0 auto;
+      }
+
+      .topbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 0;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.9rem;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 2.85rem;
+        height: 2.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 0.9rem;
+        background:
+          radial-gradient(circle at 30% 30%, rgba(128, 245, 255, 0.34), transparent 56%),
+          linear-gradient(145deg, rgba(111, 125, 255, 0.36), rgba(255, 196, 107, 0.18));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.92rem;
+        letter-spacing: 0.12em;
+      }
+
+      .brand-copy strong,
+      h1,
+      h2,
+      h3 {
+        font-family: "Syne", sans-serif;
+      }
+
+      .brand-copy {
+        display: grid;
+        gap: 0.15rem;
+      }
+
+      .brand-copy strong {
+        font-size: 1.02rem;
+        letter-spacing: 0.04em;
+      }
+
+      .brand-copy span,
+      .eyebrow,
+      .pill,
+      .stat-label,
+      nav a,
+      .mono {
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .brand-copy span,
+      nav a,
+      .kicker,
+      .lede,
+      .feature-card p,
+      .note,
+      .quick-links a,
+      .link-card p,
+      footer p,
+      li,
+      code {
+        color: var(--muted);
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      nav a {
+        text-decoration: none;
+        font-size: 0.85rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      nav a:hover,
+      .quick-links a:hover,
+      .link-card:hover h3 {
+        color: var(--accent);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.9fr);
+        gap: 2rem;
+        padding: 5rem 0 3rem;
+        align-items: stretch;
+      }
+
+      .hero-panel,
+      .stack-card,
+      .feature-card,
+      .timeline,
+      .callout,
+      .link-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, var(--panel) 0%, var(--panel-strong) 100%);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-panel {
+        padding: clamp(2rem, 3vw, 3rem);
+        border-radius: 2rem;
+      }
+
+      .hero-panel::before,
+      .stack-card::before,
+      .feature-card::before,
+      .timeline::before,
+      .callout::before,
+      .link-card::before {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(128, 245, 255, 0.12), transparent 30%, transparent 70%, rgba(111, 125, 255, 0.16));
+        content: "";
+        pointer-events: none;
+      }
+
+      .eyebrow,
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.4rem 0.75rem;
+        border: 1px solid rgba(128, 245, 255, 0.24);
+        border-radius: 999px;
+        font-size: 0.74rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: rgba(128, 245, 255, 0.08);
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 1.25rem 0 1rem;
+        font-size: clamp(3rem, 7vw, 5.4rem);
+        line-height: 0.92;
+        letter-spacing: -0.05em;
+      }
+
+      .kicker {
+        max-width: 40rem;
+        margin: 0 0 1.75rem;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .lede {
+        max-width: 42rem;
+        margin: 0 0 2rem;
+        font-size: 1.18rem;
+        line-height: 1.75;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        margin-bottom: 2rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 3.1rem;
+        padding: 0.85rem 1.3rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-decoration: none;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.88rem;
+        letter-spacing: 0.04em;
+        transition: transform 180ms ease, border-color 180ms ease, color 180ms ease, background 180ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+      }
+
+      .button.primary {
+        background: linear-gradient(120deg, rgba(128, 245, 255, 0.92), rgba(111, 125, 255, 0.94));
+        color: #07111f;
+        border-color: transparent;
+      }
+
+      .button.secondary {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.85rem;
+      }
+
+      .meta-grid article,
+      .stack-card,
+      .timeline,
+      .callout,
+      .feature-card,
+      .link-card {
+        border-radius: 1.5rem;
+      }
+
+      .meta-grid article {
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .stat-label {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-size: 0.74rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .stat-value {
+        font-family: "Syne", sans-serif;
+        font-size: 1.75rem;
+        color: var(--text);
+      }
+
+      .hero-aside {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .stack-card {
+        padding: 1.5rem;
+      }
+
+      .stack-card h2,
+      .section h2 {
+        margin: 0;
+        font-size: clamp(1.8rem, 3vw, 2.8rem);
+        letter-spacing: -0.04em;
+      }
+
+      .stack-card h3,
+      .feature-card h3,
+      .link-card h3,
+      .timeline h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.18rem;
+        letter-spacing: -0.02em;
+      }
+
+      .stack-list,
+      .quick-list,
+      .timeline ol {
+        margin: 1.1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .stack-list li,
+      .quick-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .stack-list li:last-child,
+      .quick-list li:last-child {
+        border-bottom: 0;
+      }
+
+      .stack-list span:last-child,
+      .quick-list span:last-child {
+        color: var(--text);
+      }
+
+      .note {
+        margin-top: 1rem;
+        font-size: 0.98rem;
+        line-height: 1.6;
+      }
+
+      .section {
+        padding: 1rem 0 2rem;
+      }
+
+      .section-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .section-header p {
+        max-width: 42rem;
+        margin: 0;
+        font-size: 1.02rem;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .feature-card,
+      .link-card {
+        padding: 1.4rem;
+      }
+
+      .feature-card p,
+      .link-card p,
+      .callout p,
+      .timeline li {
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .feature-card strong {
+        color: var(--accent-3);
+      }
+
+      .timeline {
+        padding: 1.6rem;
+      }
+
+      .timeline ol {
+        display: grid;
+        gap: 0.9rem;
+        counter-reset: flow;
+      }
+
+      .timeline li {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        align-items: start;
+      }
+
+      .timeline li::before {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        background: rgba(128, 245, 255, 0.12);
+        border: 1px solid rgba(128, 245, 255, 0.22);
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.82rem;
+        counter-increment: flow;
+        content: counter(flow, decimal-leading-zero);
+      }
+
+      .callout {
+        display: grid;
+        gap: 1rem;
+        padding: 1.6rem;
+      }
+
+      .quick-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .quick-links a,
+      .link-card {
+        text-decoration: none;
+      }
+
+      .docs-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .link-card {
+        min-height: 100%;
+      }
+
+      .link-card .pill {
+        margin-bottom: 0.9rem;
+      }
+
+      pre {
+        margin: 0;
+        padding: 1.2rem 1.3rem;
+        overflow-x: auto;
+        border-radius: 1.25rem;
+        background: rgba(0, 0, 0, 0.28);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        color: #f7f8ff;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.92rem;
+        line-height: 1.7;
+      }
+
+      code {
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 2rem 0 3rem;
+      }
+
+      footer p {
+        margin: 0;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .footer-links a {
+        text-decoration: none;
+        color: var(--muted);
+      }
+
+      .footer-links a:hover {
+        color: var(--accent);
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .cards,
+        .docs-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .meta-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar-inner,
+        footer {
+          justify-content: flex-start;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .topbar-inner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .hero {
+          padding-top: 3.5rem;
+        }
+
+        .hero-panel,
+        .stack-card,
+        .timeline,
+        .callout,
+        .feature-card,
+        .link-card {
+          border-radius: 1.35rem;
+        }
+
+        h1 {
+          font-size: clamp(2.6rem, 15vw, 4rem);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="CognivAgent home">
+          <span class="brand-mark" aria-hidden="true">KG</span>
+          <span class="brand-copy">
+            <strong>CognivAgent</strong>
+            <span>AI video transcription &amp; knowledge graph extraction</span>
+          </span>
+        </a>
+        <nav aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#docs">Docs</a>
+          <a href="#install">Install</a>
+          <a href="https://github.com/costiash/CognivAgent">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-panel">
+          <span class="eyebrow">Open source research cockpit</span>
+          <h1>Turn raw video into a searchable graph of ideas.</h1>
+          <p class="kicker">Built for transcript-heavy research, knowledge extraction, and agent-driven exploration.</p>
+          <p class="lede">
+            CognivAgent is a FastAPI application that transcribes videos, extracts entities and
+            relationships, and turns the result into an interactive knowledge graph you can inspect,
+            export, and query. It combines the Claude Agent SDK, OpenAI transcription, and a
+            modular frontend designed for rich graph workflows.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="https://github.com/costiash/CognivAgent">View on GitHub</a>
+            <a class="button secondary" href="#install">Quick start</a>
+            <a class="button secondary" href="https://github.com/costiash/CognivAgent/blob/main/README.md">Read the README</a>
+          </div>
+          <div class="meta-grid" aria-label="Project highlights">
+            <article>
+              <span class="stat-label">Test coverage signal</span>
+              <strong class="stat-value">914 passed</strong>
+            </article>
+            <article>
+              <span class="stat-label">Frontend surface</span>
+              <strong class="stat-value">37 modules</strong>
+            </article>
+            <article>
+              <span class="stat-label">Developer quality bar</span>
+              <strong class="stat-value">mypy strict</strong>
+            </article>
+          </div>
+        </div>
+
+        <aside class="hero-aside" aria-label="Project details">
+          <section class="stack-card">
+            <span class="pill">What it is</span>
+            <h2>A modular AI system for transcript-first knowledge work.</h2>
+            <ul class="stack-list">
+              <li><span>Backend</span><span>FastAPI + Uvicorn</span></li>
+              <li><span>AI stack</span><span>Claude Agent SDK + OpenAI</span></li>
+              <li><span>Graph layer</span><span>NetworkX + Cytoscape.js</span></li>
+              <li><span>Frontend</span><span>Vanilla ES modules</span></li>
+            </ul>
+            <p class="note">
+              The project is ideal for researchers, builders, and analysts who need more than a
+              transcript viewer. It preserves source citations, shows extraction progress, and keeps
+              graph exploration close to the original evidence.
+            </p>
+          </section>
+
+          <section class="stack-card">
+            <span class="pill">Current status</span>
+            <h3>Research-oriented and rapidly evolving.</h3>
+            <p class="note">
+              CognivAgent is not presented as production-ready infrastructure. The current focus is
+              fast iteration on transcription, extraction quality, developer tooling, and async job
+              workflows.
+            </p>
+            <ul class="quick-list">
+              <li><span>Install</span><span>uv sync</span></li>
+              <li><span>Run</span><span>uv run python -m app.main</span></li>
+              <li><span>Docs</span><span>Guides + README</span></li>
+            </ul>
+          </section>
+        </aside>
+      </section>
+
+      <section class="section" id="features">
+        <div class="section-header">
+          <div>
+            <span class="eyebrow">Core capabilities</span>
+            <h2>From transcript ingestion to graph export.</h2>
+          </div>
+          <p>
+            The product surface is intentionally broad: transcription, knowledge extraction, entity
+            resolution, graph visualization, transcript search, audit trails, and asynchronous job
+            orchestration all live in one cohesive workflow.
+          </p>
+        </div>
+        <div class="cards">
+          <article class="feature-card">
+            <h3>Video transcription with domain context</h3>
+            <p>
+              Process local videos and supported YouTube transcript flows with
+              <strong>gpt-4o-transcribe</strong>, then keep transcript text close to the downstream
+              extraction pipeline.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Knowledge graph extraction</h3>
+            <p>
+              Bootstrap domain schemas, extract entities and relationships, and keep source
+              citations so every graph node can be traced back to the transcript evidence.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Interactive graph exploration</h3>
+            <p>
+              Explore results in a <strong>Cytoscape.js</strong> interface with search, node
+              inspection, filtering, and export paths for external graph tooling.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="workflow">
+        <div class="section-header">
+          <div>
+            <span class="eyebrow">Workflow</span>
+            <h2>Designed for repeatable research loops.</h2>
+          </div>
+          <p>
+            The flow keeps discovery and structure in sync: start with a video, confirm the
+            emerging schema, then use it to process additional material without losing provenance.
+          </p>
+        </div>
+        <div class="cards">
+          <article class="timeline">
+            <h3>Knowledge graph lifecycle</h3>
+            <ol>
+              <li><span>Create a project around a topic or investigation.</span></li>
+              <li><span>Bootstrap a schema from the first transcript and confirm discoveries.</span></li>
+              <li><span>Extract entities and relationships from additional videos.</span></li>
+              <li><span>Inspect, refine, search, and export the resulting graph.</span></li>
+            </ol>
+          </article>
+
+          <article class="callout">
+            <span class="pill">Architecture snapshot</span>
+            <h3>Queue-based SessionActor pattern</h3>
+            <p>
+              HTTP requests enqueue work to a dedicated session actor, which keeps Claude SDK access
+              serialized and avoids concurrent cancel-scope failures while still supporting activity
+              streaming and background job completion callbacks.
+            </p>
+            <pre><code>HTTP request → input_queue → SessionActor → response_queue → UI</code></pre>
+          </article>
+
+          <article class="callout">
+            <span class="pill">Why teams notice it</span>
+            <h3>It treats transcripts like structured evidence.</h3>
+            <p>
+              Instead of stopping at text output, CognivAgent links transcripts, extracted entities,
+              graph relationships, and UI inspection into one research surface built for synthesis.
+            </p>
+            <div class="quick-links">
+              <a href="https://github.com/costiash/CognivAgent/blob/main/guides/knowledge-graph.md">Knowledge graph guide ↗</a>
+              <a href="https://github.com/costiash/CognivAgent/blob/main/guides/api-reference.md">API reference ↗</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="docs">
+        <div class="section-header">
+          <div>
+            <span class="eyebrow">Documentation</span>
+            <h2>Start with the right guide.</h2>
+          </div>
+          <p>
+            The repository already ships with detailed documentation for operators, contributors,
+            extension authors, and anyone trying to understand the application architecture.
+          </p>
+        </div>
+        <div class="docs-grid">
+          <a class="link-card" href="https://github.com/costiash/CognivAgent/blob/main/guides/knowledge-graph.md">
+            <span class="pill">Guide</span>
+            <h3>Knowledge Graph</h3>
+            <p>Learn how entity extraction, graph storage, schema bootstrapping, and export workflows fit together.</p>
+          </a>
+          <a class="link-card" href="https://github.com/costiash/CognivAgent/blob/main/guides/sdk-agent.md">
+            <span class="pill">Guide</span>
+            <h3>SDK Agent</h3>
+            <p>Understand the Claude Agent SDK integration, tool hooks, session model, and MCP-oriented runtime decisions.</p>
+          </a>
+          <a class="link-card" href="https://github.com/costiash/CognivAgent/blob/main/guides/frontend-architecture.md">
+            <span class="pill">Guide</span>
+            <h3>Frontend Architecture</h3>
+            <p>See how the ES module frontend is organized across chat, jobs, knowledge graph, upload, and workspace features.</p>
+          </a>
+          <a class="link-card" href="https://github.com/costiash/CognivAgent/blob/main/CONTRIBUTING.md">
+            <span class="pill">Contributing</span>
+            <h3>Join the crew</h3>
+            <p>Find contributor guidance, workflow expectations, and issue labels for first-time and ongoing contributors.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="section-header">
+          <div>
+            <span class="eyebrow">Quick start</span>
+            <h2>Run the project locally in minutes.</h2>
+          </div>
+          <p>
+            The default development path uses <code>uv</code>, plus Anthropic and OpenAI API keys.
+            Docker is also available for containerized runs.
+          </p>
+        </div>
+        <div class="cards">
+          <article class="callout">
+            <span class="pill">Installation</span>
+            <pre><code>git clone https://github.com/costiash/CognivAgent.git
+cd CognivAgent
+uv sync
+cp .env.example .env
+# add ANTHROPIC_API_KEY and OPENAI_API_KEY
+uv run python -m app.main</code></pre>
+          </article>
+          <article class="callout">
+            <span class="pill">Validation</span>
+            <pre><code>uv run pytest
+uv run mypy .
+uv run ruff check .
+uv run ruff format --check .</code></pre>
+          </article>
+          <article class="callout">
+            <span class="pill">Important note</span>
+            <h3>Built for localhost and research workflows.</h3>
+            <p>
+              The repository explicitly warns that production deployment needs additional security
+              hardening. For now, treat this as a powerful local-first tool for exploration,
+              prototyping, and contributor collaboration.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Open-source AI agent for transcript analysis, knowledge graph extraction, and exploratory research.</p>
+      <div class="footer-links">
+        <a href="https://github.com/costiash/CognivAgent">GitHub</a>
+        <a href="https://github.com/costiash/CognivAgent/blob/main/README.md">README</a>
+        <a href="https://github.com/costiash/CognivAgent/blob/main/guides/README.md">Guides</a>
+        <a href="https://github.com/costiash/CognivAgent/blob/main/LICENSE">License</a>
+      </div>
+    </footer>
+  </body>
+</html>
